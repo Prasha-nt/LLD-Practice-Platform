@@ -38,4 +38,4 @@ services:
         fromService:
           type: web
           name: lld-backend
-          property: url
+          property: host

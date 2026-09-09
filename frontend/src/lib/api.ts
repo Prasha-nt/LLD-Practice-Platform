@@ -5,7 +5,11 @@ async function getWorkingBaseUrl(): Promise<string> {
 
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envUrl) {
-    cachedWorkingBaseUrl = envUrl.replace(/\/$/, "");
+    let formatted = envUrl.trim();
+    if (!formatted.startsWith("http://") && !formatted.startsWith("https://")) {
+      formatted = `https://${formatted}`;
+    }
+    cachedWorkingBaseUrl = formatted.replace(/\/$/, "");
     if (!cachedWorkingBaseUrl.endsWith("/api")) {
       cachedWorkingBaseUrl = `${cachedWorkingBaseUrl}/api`;
     }
