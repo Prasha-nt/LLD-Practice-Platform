@@ -1,0 +1,29 @@
+# Environment variables
+.env
+.env.local
+*.env
+
+# Python / Pytest / Database
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
+backend/lld_platform.db
+lld_platform.db
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
