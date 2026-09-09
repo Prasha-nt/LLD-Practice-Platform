@@ -3,16 +3,24 @@ let cachedWorkingBaseUrl: string | null = null;
 async function getWorkingBaseUrl(): Promise<string> {
   if (cachedWorkingBaseUrl) return cachedWorkingBaseUrl;
 
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    cachedWorkingBaseUrl = envUrl.replace(/\/$/, "");
+    if (!cachedWorkingBaseUrl.endsWith("/api")) {
+      cachedWorkingBaseUrl = `${cachedWorkingBaseUrl}/api`;
+    }
+    return cachedWorkingBaseUrl;
+  }
+
   const candidates = [
-    process.env.NEXT_PUBLIC_API_URL,
     "http://127.0.0.1:8000/api",
     "http://localhost:8000/api"
-  ].filter(Boolean) as string[];
+  ];
 
   for (const base of candidates) {
     try {
       const rootUrl = base.replace(/\/api\/?$/, "");
-      const res = await fetch(`${rootUrl}/`, { method: "GET", signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${rootUrl}/`, { method: "GET", signal: AbortSignal.timeout(3000) });
       if (res.ok) {
         cachedWorkingBaseUrl = base;
         return base;
@@ -31,9 +39,9 @@ async function fetchWithFallback(endpoint: string, options?: RequestInit): Promi
   try {
     return await fetch(url, options);
   } catch (err) {
-    // Reset cache and retry once with 127.0.0.1:8000/api
+    // Reset cache and retry once
     cachedWorkingBaseUrl = null;
-    const fallbackBase = "http://127.0.0.1:8000/api";
+    const fallbackBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
     const reqOptions: RequestInit | undefined = options ? {
       ...options,
       body: options.body ? String(options.body) : undefined

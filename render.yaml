@@ -1,0 +1,41 @@
+# Render Blueprint Configuration for DesignCoach (LLD Practice Platform)
+# https://render.com/docs/blueprint-spec
+
+services:
+  # -------------------------------------------------------------------
+  # 1. FastAPI Backend Web Service
+  # -------------------------------------------------------------------
+  - type: web
+    name: lld-backend
+    env: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: OPENAI_API_KEY
+        sync: false # Set optional OpenAI API key in Render Dashboard
+
+  # -------------------------------------------------------------------
+  # 2. Next.js 14 Frontend Web Service
+  # -------------------------------------------------------------------
+  - type: web
+    name: lld-frontend
+    env: node
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.9.0
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: lld-backend
+          property: url
