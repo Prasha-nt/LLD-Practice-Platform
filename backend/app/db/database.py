@@ -3,7 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.domain.models import Base
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "lld_platform.db")
+db_dir = os.environ.get("DB_DIR", os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+os.makedirs(db_dir, exist_ok=True)
+DB_PATH = os.path.join(db_dir, "lld_platform.db")
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
 
 engine = create_engine(
