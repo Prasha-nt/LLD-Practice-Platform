@@ -3,28 +3,32 @@ let cachedWorkingBaseUrl: string | null = null;
 async function getWorkingBaseUrl(): Promise<string> {
   if (cachedWorkingBaseUrl) return cachedWorkingBaseUrl;
 
+  const candidates: string[] = [];
+
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (envUrl) {
+  if (envUrl && envUrl.trim()) {
     let formatted = envUrl.trim();
     if (!formatted.startsWith("http://") && !formatted.startsWith("https://")) {
       formatted = `https://${formatted}`;
     }
-    cachedWorkingBaseUrl = formatted.replace(/\/$/, "");
-    if (!cachedWorkingBaseUrl.endsWith("/api")) {
-      cachedWorkingBaseUrl = `${cachedWorkingBaseUrl}/api`;
+    formatted = formatted.replace(/\/$/, "");
+    if (!formatted.endsWith("/api")) {
+      formatted = `${formatted}/api`;
     }
-    return cachedWorkingBaseUrl;
+    candidates.push(formatted);
   }
 
-  const candidates = [
-    "http://127.0.0.1:8000/api",
-    "http://localhost:8000/api"
-  ];
+  if (typeof window !== "undefined" && window.location.hostname.includes("onrender.com")) {
+    const backendHost = window.location.hostname.replace("frontend", "backend");
+    candidates.push(`https://${backendHost}/api`);
+  }
+
+  candidates.push("http://127.0.0.1:8000/api", "http://localhost:8000/api");
 
   for (const base of candidates) {
     try {
       const rootUrl = base.replace(/\/api\/?$/, "");
-      const res = await fetch(`${rootUrl}/`, { method: "GET", signal: AbortSignal.timeout(3000) });
+      const res = await fetch(`${rootUrl}/`, { method: "GET", signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         cachedWorkingBaseUrl = base;
         return base;
@@ -32,6 +36,11 @@ async function getWorkingBaseUrl(): Promise<string> {
     } catch {
       // try next candidate
     }
+  }
+
+  if (candidates.length > 0) {
+    cachedWorkingBaseUrl = candidates[0];
+    return candidates[0];
   }
 
   return "http://127.0.0.1:8000/api";
@@ -45,7 +54,9 @@ async function fetchWithFallback(endpoint: string, options?: RequestInit): Promi
   } catch (err) {
     // Reset cache and retry once
     cachedWorkingBaseUrl = null;
-    const fallbackBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+    const fallbackBase = (typeof window !== "undefined" && window.location.hostname.includes("onrender.com"))
+      ? `https://${window.location.hostname.replace("frontend", "backend")}/api`
+      : (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api");
     const reqOptions: RequestInit | undefined = options ? {
       ...options,
       body: options.body ? String(options.body) : undefined
