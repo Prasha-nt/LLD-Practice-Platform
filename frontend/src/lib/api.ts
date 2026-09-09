@@ -12,6 +12,9 @@ async function getWorkingBaseUrl(): Promise<string> {
       formatted = `https://${formatted}`;
     }
     formatted = formatted.replace(/\/$/, "");
+    if (!formatted.includes(".") && !formatted.includes("localhost") && !formatted.includes("127.0.0.1")) {
+      formatted = `${formatted}.onrender.com`;
+    }
     if (!formatted.endsWith("/api")) {
       formatted = `${formatted}/api`;
     }
@@ -44,6 +47,17 @@ async function getWorkingBaseUrl(): Promise<string> {
   }
 
   return "http://127.0.0.1:8000/api";
+}
+
+export async function checkHealth(): Promise<boolean> {
+  try {
+    const baseUrl = await getWorkingBaseUrl();
+    const rootUrl = baseUrl.replace(/\/api\/?$/, "");
+    const res = await fetch(`${rootUrl}/`, { signal: AbortSignal.timeout(5000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function fetchWithFallback(endpoint: string, options?: RequestInit): Promise<Response> {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Layers, BookOpen, History, Cpu } from "lucide-react";
 import { useEffect, useState } from "react";
+import { checkHealth } from "@/lib/api";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -11,12 +12,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const checkApi = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/", { signal: AbortSignal.timeout(2000) }).catch(() => fetch("http://localhost:8000/", { signal: AbortSignal.timeout(2000) }));
-        setApiOnline(res ? res.ok : false);
-      } catch {
-        setApiOnline(false);
-      }
+      const isOk = await checkHealth();
+      setApiOnline(isOk);
     };
     checkApi();
     const interval = setInterval(checkApi, 8000);
